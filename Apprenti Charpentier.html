@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bureau d'Études Charpente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Monde « tirage de bureau d'études » : fond bleu plan, traits clairs, signal ambre du crayon de charpentier. Un écran = une action. */
+  --bg:#0d2340; --panel:#13305a; --well:#0a1b33; --line:#2c5185;
+  --paper:#eef4fb; --muted:#9db6d6; --signal:#ffb547; --good:#47d394; --bad:#ff7a6b;
+  --ax-x:#ff7a6b; --ax-y:#47d394; --ax-z:#6cb8ff;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"Barlow",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--paper);font-family:var(--body);font-size:18px;
+  background-image:linear-gradient(rgba(130,175,235,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(130,175,235,.07) 1px,transparent 1px);
+  background-size:24px 24px;-webkit-tap-highlight-color:transparent}
+#app{max-width:1180px;margin:0 auto;padding:16px 20px 128px}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--signal);outline-offset:2px}
+
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}
+.brand{font:800 22px/1 var(--display);letter-spacing:.06em;text-transform:uppercase}
+.brand small{display:block;font:600 13px var(--display);letter-spacing:.14em;color:var(--muted);margin-top:4px}
+.xp{display:flex;align-items:center;gap:10px;background:var(--well);border:2px solid var(--line);border-radius:999px;padding:6px 14px 6px 6px}
+.xp b{font:700 18px var(--mono);background:var(--signal);color:#1d1400;border-radius:999px;padding:4px 10px}
+.xp span{font:700 16px var(--display);letter-spacing:.06em;text-transform:uppercase}
+
+.btn{min-height:56px;padding:0 22px;border-radius:14px;border:2px solid var(--line);background:var(--panel);
+  font:700 20px var(--display);letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:active{transform:translateY(1px)}
+.btn.go{background:var(--signal);border-color:var(--signal);color:#1d1400}
+.btn.ok{background:var(--good);border-color:var(--good);color:#04240f}
+.btn.sm{min-height:48px;padding:0 16px;font-size:18px}
+.btn.ghost{background:transparent}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* Accueil */
+.hero{display:grid;grid-template-columns:1fr 1.15fr;gap:20px;margin:18px 0 22px;align-items:center}
+.eyebrow{font:700 14px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--signal);margin:0 0 6px}
+.hero h1{font:800 46px/1 var(--display);text-transform:uppercase;margin:0 0 16px;text-wrap:balance}
+.namebox label{display:block;font:700 14px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.namebox input{width:100%;max-width:360px;font:700 24px var(--body);background:var(--well);color:var(--paper);border:2px solid var(--line);border-radius:12px;padding:10px 14px}
+.hero .sub{color:var(--muted);font-size:18px;margin:14px 0}
+.session{font:700 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px;display:flex;gap:10px;align-items:center}
+.session:after{content:"";flex:1;height:1px;background:var(--line)}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.tile{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;text-align:left;padding:18px;border-radius:18px;border:2px solid var(--line);background:var(--panel);cursor:pointer;min-height:132px;align-content:center}
+.tile .num{grid-row:span 4;font:800 64px/1 var(--display);color:var(--signal)}
+.tile h3{margin:0;font:800 28px/1.05 var(--display);text-transform:uppercase}
+.tile .meta{color:var(--muted);font-size:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;font:700 15px var(--display);letter-spacing:.08em;text-transform:uppercase;border-radius:999px;padding:4px 12px;border:2px solid var(--line);justify-self:start}
+.chip.done{background:var(--good);border-color:var(--good);color:#04240f}
+.chip.now{border-color:var(--signal);color:var(--signal)}
+.tile.locked{opacity:.4;cursor:not-allowed}
+.tile.locked .num{color:var(--muted)}
+.tile.isdone{border-color:var(--good)}
+.foot{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+
+/* Étape */
+.mtag{font:700 18px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mtag b{color:var(--paper)}
+.segs{display:flex;gap:4px;margin:14px 0 4px}
+.segs i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+.segs i.d{background:var(--good)}
+.segs i.c{background:var(--signal)}
+.objbar{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-top:10px;font-size:17px;color:var(--paper)}
+.objbar b{font:800 14px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#1d1400;background:var(--signal);border-radius:6px;padding:2px 8px}
+.goal{border-left:4px solid var(--signal);padding:2px 0 2px 14px;margin:14px 0}
+.goal .lbl{margin-top:0}
+.goal .lead,.goal .sub{margin:0}
+ul.outs{margin:4px 0 0;padding-left:22px;font-size:20px;font-weight:600;display:grid;gap:4px}
+ul.outs li::marker{color:var(--signal)}
+em.ex{font-style:normal;font:700 13px var(--display);letter-spacing:.1em;text-transform:uppercase;background:var(--signal);color:#1d1400;border-radius:5px;padding:1px 6px;vertical-align:2px}
+.row.ok.given .rl b:after{content:""}
+.stage{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;align-items:start;margin-top:14px}
+.visual{background:rgba(10,27,51,.65);border:1px solid var(--line);border-radius:18px;padding:12px;position:sticky;top:12px}
+.visual svg{width:100%;height:auto;display:block}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px}
+.kicker{display:inline-flex;gap:8px;align-items:center;font:700 15px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--signal);margin:0 0 6px}
+.kicker em{font-style:normal;color:var(--paper);background:var(--well);border:1px solid var(--line);border-radius:6px;padding:2px 8px;letter-spacing:.06em}
+h2{font:800 36px/1.02 var(--display);text-transform:uppercase;margin:0 0 12px;text-wrap:balance}
+.lead{font-size:22px;line-height:1.35;margin:0 0 12px;font-weight:500}
+.sub{color:var(--muted);font-size:18px;line-height:1.4;margin:0 0 12px}
+.lbl{font:700 14px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+
+.acts{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.act{background:var(--paper);color:var(--bg);border-radius:8px;padding:6px 11px;font:700 18px var(--body)}
+.sep{color:var(--signal);font:700 22px var(--display)}
+ol.todo{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:10px;counter-reset:t}
+ol.todo li{display:flex;gap:12px;align-items:flex-start;counter-increment:t}
+ol.todo li:before{content:counter(t);flex:none;width:32px;height:32px;border-radius:50%;background:var(--signal);color:#1d1400;font:800 18px/32px var(--display);text-align:center}
+ol.todo li .acts{padding-top:1px}
+
+.vals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.val{background:var(--well);border:2px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center}
+.val b{display:block;font:800 16px var(--display);letter-spacing:.08em}
+.val span{display:block;font:700 30px/1.1 var(--mono);font-variant-numeric:tabular-nums}
+.val.x b{color:var(--ax-x)} .val.y b{color:var(--ax-y)} .val.z b{color:var(--ax-z)}
+.val.big{grid-column:1/-1}
+.swatch{display:inline-flex;align-items:center;gap:10px;font:700 20px var(--body)}
+.swatch i{width:34px;height:34px;border-radius:8px;border:2px solid var(--paper)}
+.cutcard{border:2px dashed #cfe0f5;border-radius:14px;padding:12px;margin-top:10px;background:rgba(207,224,245,.05)}
+.cutcard h4{margin:0 0 8px;display:flex;gap:10px;align-items:center;font:800 20px var(--display);text-transform:uppercase}
+.cutcard h4 i{font-style:normal;width:30px;height:30px;border-radius:50%;background:#cfe0f5;color:var(--bg);display:grid;place-items:center}
+.cutcard .val span{font-size:22px}
+.note{border-left:5px solid var(--signal);background:rgba(255,181,71,.09);border-radius:0 10px 10px 0;padding:10px 12px;margin-top:14px;font-size:18px}
+.note.warn{border-color:var(--bad);background:rgba(255,122,107,.1)}
+.note b{font-family:var(--display);letter-spacing:.06em;text-transform:uppercase}
+.doneBtn{width:100%;margin-top:18px;min-height:64px;font-size:24px}
+
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}
+.box{font:700 26px var(--mono);background:var(--well);border:2px solid var(--line);border-radius:12px;padding:8px 12px}
+.box.good{border-color:var(--good);color:var(--good)}
+.op{font:700 22px var(--mono);color:var(--signal)}
+.eq{font:700 26px var(--mono);color:var(--muted)}
+input.num{width:150px;font:700 30px var(--mono);background:var(--well);color:var(--paper);border:3px solid var(--signal);border-radius:12px;padding:8px 10px;text-align:center}
+input.num:disabled{border-color:var(--good);color:var(--good);opacity:1}
+input.num.sm{width:120px;font-size:24px;padding:6px 8px}
+.unit{font:700 22px var(--display);color:var(--muted)}
+.fb{min-height:30px;font:800 24px var(--display);letter-spacing:.04em;text-transform:uppercase;margin-top:10px}
+.fb.ok{color:var(--good)} .fb.ko{color:var(--bad)}
+.helpers{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.hintbox{margin-top:10px;background:var(--well);border:2px solid var(--signal);border-radius:12px;padding:10px 12px;font-size:19px}
+.hintbox b{color:var(--signal);font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;margin-right:6px}
+.known{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+.known span{font:700 17px var(--mono);background:var(--well);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+.ptab{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+.ptab div{background:var(--well);border:2px solid var(--line);border-radius:10px;text-align:center;padding:6px}
+.ptab div b{display:block;font:700 16px var(--mono);color:var(--muted)}
+.ptab div span{font:700 24px var(--mono)}
+.ptab div.on{border-color:var(--signal)} .ptab div.on span{color:var(--signal)}
+
+.rows{display:grid;gap:4px}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.row .rl b{display:block;font:700 19px var(--body)}
+.row .rl span{color:var(--muted);font:600 16px var(--mono)}
+.row .rin{display:flex;align-items:center;gap:6px}
+.row.ok .rl b:after{content:"  ✓";color:var(--good)}
+.rowfb{grid-column:1/-1}
+.rowfb .hintbox{margin-top:4px;font-size:17px}
+.rowfb .bad{color:var(--bad);font:800 18px var(--display);text-transform:uppercase;letter-spacing:.04em}
+
+.checks{display:grid;gap:10px;margin-top:6px}
+.chk{display:flex;gap:14px;align-items:center;min-height:64px;padding:10px 14px;border:2px solid var(--line);border-radius:14px;background:var(--well);font:600 20px var(--body);cursor:pointer;text-align:left;width:100%}
+.chk .cb{width:36px;height:36px;border:3px solid var(--muted);border-radius:9px;flex:none;display:grid;place-items:center;font:800 22px var(--display);color:#04240f}
+.chk.on{border-color:var(--good)}
+.chk.on .cb{background:var(--good);border-color:var(--good)}
+.chef{margin-top:18px;border:2px solid var(--signal);border-radius:16px;padding:16px;background:rgba(255,181,71,.07)}
+.chef h3{margin:0 0 6px;font:800 26px var(--display);text-transform:uppercase}
+.chef .pinrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.chef input{width:140px;letter-spacing:.3em}
+
+.nav{position:fixed;left:0;right:0;bottom:0;background:rgba(9,25,48,.95);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom));z-index:5}
+.nav-in{max-width:1180px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.nav .count{font:700 18px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.nav .btn{min-width:170px;min-height:62px;font-size:22px}
+
+.modal{position:fixed;inset:0;background:rgba(4,12,26,.82);display:grid;place-items:center;padding:16px;z-index:10}
+.sheet{max-width:760px;width:100%;max-height:88vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px}
+.sheet h2{font-size:32px}
+.lex{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.lexi{background:var(--well);border:1px solid var(--line);border-radius:14px;padding:10px}
+.lexi b{font:800 22px var(--display);text-transform:uppercase;color:var(--signal)}
+.lexi p{margin:4px 0 0;font-size:17px}
+.lexi svg{width:100%;height:auto;display:block;margin-top:6px}
+.badge{display:grid;justify-items:center;text-align:center;gap:8px}
+.badge svg{width:220px;height:auto}
+.cert{border:3px double var(--signal);border-radius:16px;padding:22px;text-align:center;background:var(--well)}
+.cert .who{font:800 44px/1 var(--display);text-transform:uppercase;margin:8px 0}
+.xpfloat{position:fixed;right:24px;top:70px;font:800 30px var(--display);color:var(--signal);pointer-events:none;animation:up 1.1s ease-out forwards;z-index:20}
+@keyframes up{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-40px)}}
+.hi{animation:pulse 1.3s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:880px){
+  .stage,.hero{grid-template-columns:1fr}
+  .visual{position:static}
+  .tiles,.lex{grid-template-columns:1fr}
+  .hero h1{font-size:38px}
+  h2{font-size:30px}
+  .nav .btn{min-width:0;padding:0 16px}
+}
+.flds{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
+.fld{background:var(--well);border:2px solid var(--line);border-radius:14px;padding:10px 12px}
+.fld label{display:block;font:700 15px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.fld .rin{display:flex;align-items:center;gap:6px}
+.fld input.num{width:100%;min-width:0}
+.fld.good{border-color:var(--good)}
+.fld.bad{border-color:var(--bad)}
+.fmsg{color:var(--bad);font:800 17px/1.2 var(--display);margin-top:6px}
+.fld .hintbox{font-size:16px;padding:8px 10px}
+textarea{width:100%;min-height:90px;background:var(--well);color:var(--paper);border:2px solid var(--line);border-radius:12px;padding:10px;font:500 13px var(--mono);word-break:break-all}
+@media (max-width:520px){.flds{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="modal"></div>
+<script>
+/* ---------- Réglages ---------- */
+const PIN = "2020";           // code du chef d'atelier (enseignant)
+const KEY = "bec-charpente-v2";
+
+/* ---------- Géométrie de la ferme (cotes maquette en mm, X vers la droite, Z vers le haut) ---------- */
+const OX = 40, OZ = 265;
+const P = (x, z) => [+(x + OX).toFixed(1), +(OZ - z).toFixed(1)];
+const pts = a => a.map(p => P(p[0], p[1]).join(",")).join(" ");
+const R = (x1, z1, x2, z2) => [[x1, z1], [x2, z1], [x2, z2], [x1, z2]];
+const MIR = a => a.map(p => [300 - p[0], p[1]]);
+const ARB = [[0, 162], [12, 162], [145.5, 215.9], [145.5, 225.6], [0, 166.9]];
+const CF = [[143.4, 169.9], [147.6, 174.1], [116.3, 205.4], [112.1, 201.2]];
+const GEO = {
+  potG: R(0, 0, 9, 150), potD: R(291, 0, 300, 150), entrait: R(0, 150, 300, 162),
+  poincon: R(145.5, 162, 154.5, 232), arbG: ARB, arbD: MIR(ARB), cfG: CF, cfD: MIR(CF),
+  raw: [[-9.9, 153], [152.3, 218.6], [148.9, 226.9], [-13.3, 161.3]]
+};
+const COL = { potG: "#c98a4b", potD: "#c98a4b", entrait: "#f2913d", poincon: "#f4cf4a", arbG: "#57d07a", arbD: "#57d07a", cfG: "#5ec8ff", cfD: "#5ec8ff", raw: "#57d07a" };
+const CUTS = { about: R(-30, 140, 0, 240), niveau: R(-30, 132, 30, 162), aplomb: R(145.5, 140, 185.5, 250), cf: R(145.5, 160, 155.5, 200), mortaise: R(148.5, 156, 151.5, 162) };
+const ALL = ["potG", "potD", "entrait", "cfG", "cfD", "poincon", "arbG", "arbD"];
+const BASE = ["potG", "potD", "entrait"];
+const ANG = {
+  A: { v: [12, 162], a: [0, 22], r: 30, l: [48, 166] },
+  C: { v: [145.5, 215.9], a: [202, 270], r: 13, l: [139, 205] },
+  D: { v: [145.5, 215.9], a: [90, 202], r: 8, l: [134, 228] },
+  E: { v: [145.5, 172], a: [90, 135], r: 12, l: [141, 187] },
+  F: { v: [145.5, 172], a: [135, 180], r: 16, l: [127, 176] },
+  G: { v: [114.2, 203.3], a: [-45, 22], r: 11, l: [127, 199] }
+};
+let uid = 0;
+const rad = d => d * Math.PI / 180;
+function T(x, z, s, o = {}) {
+  const [a, b] = P(x, z);
+  return `<text x="${a}" y="${b}" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="${o.w || 700}" font-size="${o.fs || 9}" fill="${o.c || "#eef4fb"}" text-anchor="${o.anchor || "middle"}" dominant-baseline="middle" ${o.halo ? 'stroke="#0a1b33" stroke-width="' + (o.fs || 9) * 0.28 + '" paint-order="stroke"' : ""}>${s}</text>`;
+}
+function dim(x1, z1, x2, z2, label, f, c = "#ffb547") {
+  const a = P(x1, z1), b = P(x2, z2), t = 3.5 * f, horiz = Math.abs(z1 - z2) < 0.01;
+  let s = `<g stroke="${c}" stroke-width="${0.9 * f}"><line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;
+  if (horiz) s += `<line x1="${a[0]}" y1="${a[1] - t}" x2="${a[0]}" y2="${a[1] + t}"/><line x1="${b[0]}" y1="${b[1] - t}" x2="${b[0]}" y2="${b[1] + t}"/>`;
+  else s += `<line x1="${a[0] - t}" y1="${a[1]}" x2="${a[0] + t}" y2="${a[1]}"/><line x1="${b[0] - t}" y1="${b[1]}" x2="${b[0] + t}" y2="${b[1]}"/>`;
+  s += `</g>`;
+  if (horiz) s += T((x1 + x2) / 2, z1 + 7 * f, label, { c, fs: 10 * f, halo: true });
+  else s += T(x1 + 4 * f, (z1 + z2) / 2, label, { c, fs: 10 * f, anchor: "start", halo: true });
+  return s;
+}
+function fermeInner(o, f) {
+  const show = o.show || [], hi = o.hi || [], ghost = o.ghost || [], cuts = o.cuts || [], marks = o.marks || [];
+  const id = "hatch" + (++uid);
+  let s = `<defs><pattern id="${id}" width="${5 * f}" height="${5 * f}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="${5 * f}" stroke="#cfe0f5" stroke-width="${1.3 * f}" opacity=".75"/></pattern></defs>`;
+  const g1 = P(-35, 0), g2 = P(335, 0);
+  s += `<line x1="${g1[0]}" y1="${g1[1]}" x2="${g2[0]}" y2="${g2[1]}" stroke="#6f8fb8" stroke-width="${0.8 * f}" stroke-dasharray="${4 * f} ${3 * f}"/>`;
+  for (const k of ["potG", "potD", "entrait", "cfG", "cfD", "poincon", "arbG", "arbD", "raw"]) {
+    const on = show.includes(k), gh = ghost.includes(k) && !on;
+    if (!on && !gh) continue;
+    if (gh) { s += `<polygon points="${pts(GEO[k])}" fill="none" stroke="${COL[k]}" stroke-opacity=".5" stroke-width="${0.8 * f}" stroke-dasharray="${3 * f} ${2 * f}"/>`; continue; }
+    const isHi = hi.includes(k), dimmed = hi.length && !isHi ? 0.45 : 1;
+    s += `<polygon points="${pts(GEO[k])}" fill="${COL[k]}" opacity="${dimmed}" stroke="${isHi ? "#ffffff" : "#0a1b33"}" stroke-width="${(isHi ? 1.8 : 0.6) * f}" stroke-linejoin="round"${isHi ? ' class="hi"' : ""}/>`;
+  }
+  if (show.includes("mortaise")) s += `<polygon points="${pts(CUTS.mortaise)}" fill="#0a1b33" stroke="#ffb547" stroke-width="${0.7 * f}" stroke-dasharray="${1.4 * f} ${0.9 * f}"/>`;
+  if (show.includes("tenon")) { const th = hi.includes("tenon"); s += `<polygon points="${pts(CUTS.mortaise)}" fill="${COL.poincon}" stroke="${th ? "#fff" : "#0a1b33"}" stroke-width="${(th ? 1.2 : 0.5) * f}"${th ? ' class="hi"' : ""}/>`; }
+  for (const e of (o.extra || [])) {
+    if (e.hole) s += `<polygon points="${pts(e.p)}" fill="url(#${id})" stroke="#cfe0f5" stroke-width="${0.9 * f}" stroke-dasharray="${2.5 * f} ${1.5 * f}"/>`;
+    else if (e.ghost) s += `<polygon points="${pts(e.p)}" fill="none" stroke="${e.c || "#cfe0f5"}" stroke-opacity=".7" stroke-width="${0.9 * f}" stroke-dasharray="${3 * f} ${2 * f}"/>`;
+    else s += `<polygon points="${pts(e.p)}" fill="${e.c}" stroke="#ffffff" stroke-width="${1.6 * f}" stroke-linejoin="round" opacity=".95"/>`;
+  }
+  for (const l of (o.lines || [])) {
+    const a = P(l.a[0], l.a[1]), b = P(l.b[0], l.b[1]);
+    s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${l.c}" stroke-width="${2 * f}"${l.dash ? ` stroke-dasharray="${3 * f} ${2 * f}"` : ""}/>`;
+    if (l.label) s += T(l.l[0], l.l[1], l.label, { c: l.c, fs: 9 * f, halo: true, anchor: l.an || "middle" });
+  }
+  for (const c of cuts) {
+    s += `<polygon points="${pts(CUTS[c])}" fill="url(#${id})" stroke="#cfe0f5" stroke-width="${0.9 * f}" stroke-dasharray="${2.5 * f} ${1.5 * f}"/>`;
+    const n = (o.cutNums || {})[c];
+    if (n) {
+      const r = CUTS[c], cx = c === "niveau" ? -15 : (r[0][0] + r[1][0]) / 2, cz = c === "niveau" ? 146 : c === "about" ? 200 : c === "aplomb" ? 190 : 190;
+      const [a, b] = P(cx, cz);
+      s += `<circle cx="${a}" cy="${b}" r="${6.5 * f}" fill="#cfe0f5"/>` + T(cx, cz, n, { c: "#0d2340", fs: 9 * f, w: 800 });
+    }
+  }
+  if (marks.includes("origin")) {
+    const [a, b] = P(0, 0), [xa] = P(48, 0), [, zb] = P(0, 48);
+    s += `<line x1="${a}" y1="${b}" x2="${xa}" y2="${b}" stroke="#ff7a6b" stroke-width="${2 * f}"/><line x1="${a}" y1="${b}" x2="${a}" y2="${zb}" stroke="#6cb8ff" stroke-width="${2 * f}"/>`;
+    s += `<circle cx="${a}" cy="${b}" r="${4 * f}" fill="#ffb547"/>` + T(56, 0, "X", { c: "#ff7a6b", fs: 11 }) + T(-8, 50, "Élév.", { c: "#6cb8ff", fs: 11, anchor: "end" }) + T(-10, -1, "0", { c: "#ffb547", fs: 11 });
+  }
+  if (marks.includes("width")) s += dim(0, 75, 300, 75, o.wLabel || "300 mm", f);
+  if (marks.includes("slope")) {
+    const a = P(0, 162), b = P(150, 222);
+    s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#ffb547" stroke-width="${1.6 * f}" stroke-dasharray="${4 * f} ${2 * f}"/>`;
+    s += dim(0, 134, 150, 134, "300 cm", f) + dim(170, 162, 170, 222, o.slopeLabel || "?", f);
+  }
+  if (marks.includes("height")) s += dim(172, 162, 172, 232, o.hLabel || "?", f);
+  if (marks.includes("levels")) {
+    s += T(-6, 162, "162", { anchor: "end", c: "#ffb547", fs: 11 * f, halo: true });
+    const a = P(154.5, 232), b = P(185, 232);
+    s += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#ffb547" stroke-width="${f}" stroke-dasharray="${2 * f} ${2 * f}"/>` + T(189, 232, o.topLabel || "?", { anchor: "start", c: "#ffb547", fs: 11 * f, halo: true });
+  }
+  if (marks.includes("lengths")) {
+    const L = (x, z, t, an) => T(x, z, t, { fs: 11, halo: true, anchor: an || "middle" });
+    s += L(-6, 75, "150", "end") + L(306, 75, "150", "start") + L(225, 156, "300") + L(150, 242, "76") + L(62, 199, "175") + L(238, 199, "175") + L(122, 184, "52") + L(178, 184, "52");
+  }
+  if (marks.includes("angles")) {
+    const sq = [[139, 162], [139, 168], [145.5, 168]];
+    const bOn = o.angle === "B";
+    s += `<polyline points="${pts(sq)}" fill="${bOn ? "rgba(255,181,71,.35)" : "none"}" stroke="${bOn ? "#ffb547" : "#9db6d6"}" stroke-width="${(bOn ? 1.4 : 0.7) * f}"/>`;
+    s += T(133, 165, "B", { c: bOn ? "#ffb547" : "#cfe0f5", fs: 9, halo: true, w: 800 });
+    for (const L in ANG) {
+      const d = ANG[L], on = o.angle === L, v = d.v;
+      const p1 = P(v[0] + d.r * Math.cos(rad(d.a[0])), v[1] + d.r * Math.sin(rad(d.a[0])));
+      const p2 = P(v[0] + d.r * Math.cos(rad(d.a[1])), v[1] + d.r * Math.sin(rad(d.a[1])));
+      const pv = P(v[0], v[1]);
+      const path = `M${pv[0]} ${pv[1]} L${p1[0]} ${p1[1]} A${d.r} ${d.r} 0 0 0 ${p2[0]} ${p2[1]} Z`;
+      s += `<path d="${path}" fill="${on ? "rgba(255,181,71,.45)" : "none"}" stroke="${on ? "#ffb547" : "#9db6d6"}" stroke-width="${(on ? 1.4 : 0.6) * f}"${on ? ' class="hi"' : ""}/>`;
+      s += T(d.l[0], d.l[1], L, { c: on ? "#ffb547" : "#cfe0f5", fs: on ? 10 : 8.5, halo: true, w: 800 });
+    }
+  }
+  return s;
+}
+function ferme(o = {}) {
+  let vb = "0 0 380 280", f = 1;
+  if (o.zoom) { const [x1, z1, x2, z2] = o.zoom; f = (x2 - x1) / 380; vb = `${x1 + OX} ${OZ - z2} ${x2 - x1} ${z2 - z1}`; }
+  return `<svg viewBox="${vb}" role="img" aria-label="Schéma de la ferme">${fermeInner(o, f)}</svg>`;
+}
+function trois() {
+  const inner = fermeInner({ show: ALL }, 1);
+  const list = [[391, 0.45, "Ferme 3 · Y = 391"], [195.5, 0.7, "Ferme 2 · Y = 195,5"], [0, 1, "Ferme 1 · Y = 0"]];
+  let s = `<svg viewBox="0 -78 500 360" role="img" aria-label="Les trois fermes de l'atelier">`;
+  for (const [y, op, lab] of list) {
+    const dx = +(y * 0.3).toFixed(1), dy = +(-y * 0.17).toFixed(1);
+    s += `<g transform="translate(${dx},${dy})" opacity="${op}">${inner}</g>`;
+    s += `<text x="${348 + dx}" y="${262 + dy}" font-family="Barlow Condensed, sans-serif" font-weight="700" font-size="12" fill="#ffb547">${lab}</text>`;
+  }
+  return s + `</svg>`;
+}
+const svgT = (x, y, s, o = {}) => `<text x="${x}" y="${y}" font-family="Barlow Condensed, Arial Narrow, sans-serif" font-weight="${o.w || 700}" font-size="${o.fs || 16}" fill="${o.c || "#eef4fb"}" text-anchor="${o.a || "start"}">${s}</text>`;
+function vScale() {
+  let s = `<svg viewBox="0 0 380 250" role="img" aria-label="Échelle 1/20 : 20 fois plus petit">` +
+    svgT(20, 24, "LA VRAIE POUTRE : 6 m", { c: "#9db6d6", fs: 15 });
+  for (let i = 0; i < 20; i++) s += `<rect x="${20 + i * 17}" y="34" width="17" height="30" fill="${i === 0 ? "#ffb547" : "#f2913d"}" stroke="#0d2340" stroke-width="1.5"/>`;
+  s += svgT(190, 86, "coupée en 20 morceaux égaux", { a: "middle", fs: 16 });
+  s += `<path d="M28 70 V150" stroke="#ffb547" stroke-width="2.5" fill="none"/><path d="M21 142 L28 154 L35 142" fill="#ffb547"/>`;
+  s += svgT(20, 186, "TA MAQUETTE = 1 MORCEAU", { c: "#9db6d6", fs: 15 });
+  s += `<rect x="20" y="196" width="17" height="30" fill="#ffb547" stroke="#0d2340" stroke-width="1.5"/>`;
+  s += svgT(48, 218, "20 fois plus petit", { fs: 22, c: "#ffb547", w: 800 });
+  return s + `</svg>`;
+}
+function vFiche() {
+  const rows = [["Poteau", "2", "3 m", "?"], ["Entrait", "1", "6 m", "300 mm"], ["Poinçon", "1", "…", "?"], ["Arbalétrier", "2", "…", "?"], ["Contrefiche", "2", "…", "?"]];
+  const X = [20, 140, 200, 280];
+  let s = `<svg viewBox="0 0 380 260" role="img" aria-label="Fiche de débit">` +
+    `<rect x="10" y="8" width="360" height="244" rx="8" fill="#eef4fb"/>` +
+    svgT(24, 36, "FICHE DE DÉBIT", { fs: 20, c: "#0d2340", w: 800 }) + svgT(356, 36, "Atelier 6 × 8 m", { fs: 14, c: "#4a6688", a: "end" });
+  ["Pièce", "Nb", "En vrai", "Maquette"].forEach((t, i) => s += svgT(X[i] + 4, 66, t.toUpperCase(), { fs: 13, c: "#4a6688" }));
+  s += `<line x1="20" y1="74" x2="360" y2="74" stroke="#0d2340" stroke-width="2"/>`;
+  rows.forEach((r, j) => {
+    const y = 102 + j * 32;
+    r.forEach((t, i) => s += svgT(X[i] + 4, y, t, { fs: 17, c: i === 3 && t === "?" ? "#d9822b" : "#0d2340", w: i === 0 ? 700 : 600 }));
+    s += `<line x1="20" y1="${y + 12}" x2="360" y2="${y + 12}" stroke="#b9c9dd"/>`;
+  });
+  return s + `</svg>`;
+}
+function vStairs() {
+  let s = `<svg viewBox="0 0 380 250" role="img" aria-label="Pente de 40 pour cent">`;
+  s += svgT(20, 24, "100 EN AVANT → 40 EN HAUT", { c: "#ffb547", fs: 17 });
+  for (let i = 0; i < 3; i++) {
+    const x = 30 + 100 * i, y = 215 - 40 * i;
+    s += `<polygon points="${x},${y} ${x + 100},${y} ${x + 100},${y - 40}" fill="rgba(255,181,71,.16)" stroke="#ffb547" stroke-width="1.5"/>`;
+    s += svgT(x + 50, y + 18, "100", { a: "middle", fs: 15 }) + svgT(x + 106, y - 16, "40", { fs: 15, c: "#ffb547" });
+  }
+  s += `<line x1="30" y1="215" x2="330" y2="95" stroke="#eef4fb" stroke-width="3"/>`;
+  s += svgT(28, 92, "Ton toit = 3 marches", { fs: 16, c: "#9db6d6" });
+  return s + `</svg>`;
+}
+function vRules() {
+  const c = "#ffb547", m = "#eef4fb";
+  return `<svg viewBox="0 0 380 170" role="img" aria-label="Trois règles d'angles">` +
+    svgT(62, 18, "TRIANGLE", { a: "middle", fs: 14, c: "#9db6d6" }) + svgT(190, 18, "ÉQUERRE", { a: "middle", fs: 14, c: "#9db6d6" }) + svgT(318, 18, "LIGNE DROITE", { a: "middle", fs: 14, c: "#9db6d6" }) +
+    `<polygon points="12,125 112,125 40,40" fill="none" stroke="${m}" stroke-width="2"/>` +
+    svgT(26, 119, "a", { fs: 15, c }) + svgT(92, 119, "b", { fs: 15, c }) + svgT(38, 62, "c", { fs: 15, c }) +
+    svgT(62, 155, "a + b + c = 180°", { a: "middle", fs: 16 }) +
+    `<polyline points="150,35 150,125 240,125" fill="none" stroke="${m}" stroke-width="2"/><line x1="150" y1="125" x2="225" y2="60" stroke="${c}" stroke-width="2"/><polyline points="150,113 162,113 162,125" fill="none" stroke="${m}" stroke-width="1.2"/>` +
+    svgT(186, 112, "a", { fs: 15, c }) + svgT(162, 84, "b", { fs: 15, c }) +
+    svgT(190, 155, "a + b = 90°", { a: "middle", fs: 16 }) +
+    `<line x1="262" y1="125" x2="374" y2="125" stroke="${m}" stroke-width="2"/><line x1="318" y1="125" x2="292" y2="45" stroke="${c}" stroke-width="2"/>` +
+    svgT(338, 112, "a", { fs: 15, c }) + svgT(290, 112, "b", { fs: 15, c }) +
+    svgT(318, 155, "a + b = 180°", { a: "middle", fs: 16 }) + `</svg>`;
+}
+function vOrigin() {
+  let s = `<svg viewBox="0 0 380 240" role="img" aria-label="Plan de travail et point zéro">`;
+  s += `<polygon points="40,200 280,200 350,120 110,120" fill="#13305a" stroke="#2c5185" stroke-width="2"/>`;
+  for (let i = 1; i < 6; i++) { const t = i / 6; s += `<line x1="${40 + 240 * t}" y1="200" x2="${110 + 240 * t}" y2="120" stroke="#2c5185"/>`; }
+  for (let i = 1; i < 4; i++) { const t = i / 4; s += `<line x1="${40 + 70 * t}" y1="${200 - 80 * t}" x2="${280 + 70 * t}" y2="${200 - 80 * t}" stroke="#2c5185"/>`; }
+  s += `<line x1="40" y1="200" x2="130" y2="200" stroke="#ff7a6b" stroke-width="4"/><line x1="40" y1="200" x2="86" y2="147" stroke="#47d394" stroke-width="4"/><line x1="40" y1="200" x2="40" y2="110" stroke="#6cb8ff" stroke-width="4"/>`;
+  s += `<circle cx="40" cy="200" r="8" fill="#ffb547"/>`;
+  s += svgT(134, 218, "X droite", { fs: 15, c: "#ff7a6b" }) + svgT(92, 146, "Y fond", { fs: 15, c: "#47d394" }) + svgT(48, 106, "Z haut", { fs: 15, c: "#6cb8ff" });
+  s += svgT(20, 230, "0 = coin de la règle", { fs: 15, c: "#ffb547" });
+  return s + `</svg>`;
+}
+function vMoney() {
+  return `<svg viewBox="0 0 380 220" role="img" aria-label="Pertes et remise">` +
+    svgT(20, 24, "BOIS : + 12 % DE CHUTES", { fs: 15, c: "#9db6d6" }) +
+    `<rect x="20" y="34" width="250" height="34" rx="4" fill="#5ec8ff"/><rect x="270" y="34" width="30" height="34" rx="4" fill="#ffb547"/>` +
+    svgT(30, 57, "50 m posés", { fs: 16, c: "#0d2340" }) + svgT(306, 57, "+6", { fs: 16, c: "#ffb547" }) +
+    svgT(20, 90, "On commande 56 m", { fs: 17 }) +
+    svgT(20, 130, "PRIX : − 15 % DE REMISE", { fs: 15, c: "#9db6d6" }) +
+    `<rect x="20" y="140" width="212" height="34" rx="4" fill="#47d394"/><rect x="232" y="140" width="38" height="34" rx="4" fill="none" stroke="#ff7a6b" stroke-width="2" stroke-dasharray="4 3"/><line x1="232" y1="174" x2="270" y2="140" stroke="#ff7a6b" stroke-width="2"/>` +
+    svgT(30, 163, "85 € payés", { fs: 16, c: "#04240f" }) + svgT(278, 163, "−15", { fs: 16, c: "#ff7a6b" }) +
+    svgT(20, 200, "Sur 100 €, on paie 85 €", { fs: 17 }) + `</svg>`;
+}
+function vBadge(n, name) {
+  return `<svg viewBox="0 0 200 200" role="img" aria-label="Badge ${name}"><polygon points="100,10 178,55 178,145 100,190 22,145 22,55" fill="#13305a" stroke="#ffb547" stroke-width="6"/><polygon points="100,28 162,64 162,136 100,172 38,136 38,64" fill="none" stroke="#2c5185" stroke-width="2"/>` +
+    svgT(100, 92, "MISSION " + n, { a: "middle", fs: 18, c: "#9db6d6" }) + svgT(100, 126, name.toUpperCase(), { a: "middle", fs: 28, c: "#ffb547", w: 800 }) + `</svg>`;
+}
+
+/* ---------- Pièces dessinées à partir des cotes de l'élève ---------- */
+const fin = (...a) => a.every(Number.isFinite);
+const near = (v, t) => Number.isFinite(v) && Math.abs(v - t) <= 0.26;
+function barAt(a) {
+  const d = [Math.cos(rad(a)), Math.sin(rad(a))], n = [-d[1], d[0]];
+  const S0 = [12 - 24 * d[0], 162 - 24 * d[1]], E = [S0[0] + 175 * d[0], S0[1] + 175 * d[1]];
+  return [S0, E, [E[0] + 9 * n[0], E[1] + 9 * n[1]], [S0[0] + 9 * n[0], S0[1] + 9 * n[1]]];
+}
+function cfAt(f) {
+  const d = [Math.cos(rad(180 - f)), Math.sin(rad(180 - f))], n = [-d[1] * 3, d[0] * 3], F = [145.5, 172], E = [F[0] + 46 * d[0], F[1] + 46 * d[1]];
+  return [[F[0] - n[0], F[1] - n[1]], [E[0] - n[0], E[1] - n[1]], [E[0] + n[0], E[1] + n[1]], [F[0] + n[0], F[1] + n[1]]];
+}
+function lineAt(p, ang, len) { const d = [Math.cos(rad(ang)), Math.sin(rad(ang))]; return { a: [p[0] - len * d[0], p[1] - len * d[1]], b: [p[0] + len * d[0], p[1] + len * d[1]] }; }
+function vPlan(y2, y3) {
+  const X = x => 110 + x * 0.6, Y = y => 272 - y * 0.6;
+  const bar = (y, c, g) => g
+    ? `<rect x="${X(0)}" y="${Y(y + 9)}" width="180" height="5.4" fill="none" stroke="${c}" stroke-dasharray="4 3" stroke-width="1.5"/>`
+    : `<rect x="${X(0)}" y="${Y(y + 9)}" width="180" height="5.4" fill="${c}" stroke="#fff" stroke-width="1.2"/>`;
+  let s = `<svg viewBox="0 0 380 310" role="img" aria-label="Vue de dessus de l'atelier">`;
+  s += `<rect x="${X(0)}" y="${Y(400)}" width="180" height="240" fill="#13305a" stroke="#2c5185" stroke-width="2"/>`;
+  s += bar(195.5, "#cfe0f5", 1) + bar(391, "#cfe0f5", 1) + bar(0, "#f2913d");
+  s += svgT(X(300) + 8, Y(4), "Ferme 1", { fs: 14 });
+  if (Number.isFinite(y2)) s += bar(y2, "#f2913d") + svgT(X(300) + 8, Y(y2 + 4), "Ferme 2", { fs: 14 });
+  if (Number.isFinite(y3)) s += bar(y3, "#f2913d") + svgT(X(300) + 8, Y(y3 + 4), "Ferme 3", { fs: 14 });
+  s += `<line x1="90" y1="${Y(0)}" x2="90" y2="${Y(400)}" stroke="#ffb547" stroke-width="1.5"/><line x1="84" y1="${Y(0)}" x2="96" y2="${Y(0)}" stroke="#ffb547" stroke-width="1.5"/><line x1="84" y1="${Y(400)}" x2="96" y2="${Y(400)}" stroke="#ffb547" stroke-width="1.5"/>`;
+  s += svgT(80, Y(200) + 5, "400", { fs: 15, c: "#ffb547", a: "end" });
+  s += svgT(X(150), Y(400) - 10, "FOND", { fs: 13, c: "#9db6d6", a: "middle" }) + svgT(X(150), Y(0) + 22, "AVANT · Y = 0", { fs: 13, c: "#9db6d6", a: "middle" });
+  return s + `</svg>`;
+}
+const MSG = {
+  size: ["Trop grand", "Trop petit"], x: ["Trop à droite", "Trop à gauche"],
+  z: ["Ça flotte : ça ne touche pas la pièce du dessous", "Ça s’enfonce dans la pièce du dessous"],
+  angle: ["Trop penché", "Pas assez penché"], cut: ["Regarde le trait sur le schéma : il n’est pas droit", "Regarde le trait sur le schéma : il n’est pas droit"],
+  y: ["Trop au fond", "Trop vers l’avant"]
+};
+
+/* ---------- Contenu des missions ---------- */
+const MISSIONS = [
+  { id: "m1", n: 1, title: "L’échelle 1/20", maths: "Proportionnalité", badge: "Traceur",
+    goal: { obj: "Remplir la fiche de débit, puis dessiner le bas de la ferme.", use: "La fiche de débit, c’est la liste de toutes les pièces de bois avec leurs mesures. Le charpentier s’en sert pour couper et commander son bois. Toi, tu t’en sers pour dessiner ta ferme sans erreur.", out: ["Ta fiche de débit remplie", "2 poteaux et 1 entrait posés sur ton épure"] },
+    steps: [
+    { type: "goal", visual: () => vFiche() },
+    { type: "brief", title: "C’est quoi, l’échelle 1/20 ?", text: "1/20 veut dire : ton dessin est 20 fois plus petit que le vrai bâtiment.", sub: "Coupe une vraie poutre en 20 morceaux égaux : un seul morceau, c’est sa taille sur ton dessin.", visual: vScale },
+    { type: "rule", title: "Comment on calcule", text: "Ton dessin compte en millimètres. Deux étapes, toujours dans cet ordre :", steps2: ["Passe la vraie mesure en millimètres. 1 m = 1 000 mm. 1 cm = 10 mm.", "Divise par 20, car ton dessin est 20 fois plus petit."], chains: [[["6 m"], ["en mm", "op"], ["6 000 mm"], ["÷ 20", "op"], ["300 mm", "good"]]], note: "Exemple : l’entrait mesure 6 m en vrai. Sur ton dessin, il mesure 300 mm.", visual: () => ferme({ show: ["entrait"], hi: ["entrait"], ghost: ALL, marks: ["width"], wLabel: "6 m → 300 mm" }) },
+    { type: "multi", title: "Ta fiche de débit", text: "Pour chaque mesure : la vraie taille → la taille sur ton dessin.", visual: () => vFiche(), rows: [
+      { label: "Entrait : longueur", real: "6 m", ans: 300, unit: "mm", given: true },
+      { label: "Atelier : longueur", real: "8 m", ans: 400, unit: "mm", hint: "Commence par passer 8 m en millimètres." },
+      { label: "Poteau : hauteur", real: "3 m", ans: 150, unit: "mm", hint: "Même méthode : d’abord en mm, ensuite l’échelle." },
+      { label: "Poteau, poinçon, arbalétrier : épaisseur", real: "18 cm", ans: 9, unit: "mm", hint: "Attention, ici ce sont des cm. Combien de mm dans 1 cm ?" },
+      { label: "Entrait : hauteur", real: "24 cm", ans: 12, unit: "mm", hint: "Des cm, comme juste avant." },
+      { label: "Écart entre 2 fermes", real: "4 m", ans: 200, unit: "mm", hint: "Relis l’exemple de l’entrait." },
+      { label: "Contrefiche : épaisseur", real: "12 cm", ans: 6, unit: "mm", hint: "Des cm. Ton dessin est combien de fois plus petit ?" }] },
+    { type: "brief", title: "Ton plan de travail : l’épure", text: "Tu dessines la ferme vue de face, comme le charpentier trace son épure.", sub: "Chaque pièce se place avec 2 cotes : X (depuis le zéro, vers la droite) et l’élévation (depuis le sol, vers le haut). Les pointillés montrent où vont les pièces.", visual: () => ferme({ ghost: ALL, marks: ["origin"] }) },
+    { type: "build", title: "Poteau gauche", text: "Ses mesures sont dans ta fiche de débit.", fields: [
+      { k: "e", label: "Épaisseur", ans: 9, kind: "size", hint: "Ligne « épaisseur » de ta fiche." },
+      { k: "h", label: "Hauteur", ans: 150, kind: "size", hint: "Ligne « poteau : hauteur » de ta fiche." },
+      { k: "x", label: "X", ans: 0, kind: "x", hint: "Il est tout à gauche, pile sur le point zéro." },
+      { k: "z", label: "Élévation", ans: 0, kind: "z", hint: "Il est posé sur le sol." }],
+      draw: v => ferme({ ghost: ALL, marks: ["origin"], extra: fin(v.e, v.h, v.x, v.z) ? [{ p: R(v.x, v.z, v.x + v.e, v.z + v.h), c: COL.potG }] : [] }) },
+    { type: "build", title: "Poteau droit", text: "Même poteau, à l’autre bout. Son côté droit doit tomber pile à 300.", info: ["Épaisseur 9 mm", "Hauteur 150 mm", "Élévation 0"], fields: [
+      { k: "x", label: "X", ans: 291, kind: "x", hint: "X, c’est la place de son côté gauche. Le poteau fait 9 mm de large." }],
+      draw: v => ferme({ show: ["potG"], ghost: ALL, extra: fin(v.x) ? [{ p: R(v.x, 0, v.x + 9, 150), c: COL.potD }] : [] }) },
+    { type: "build", title: "L’entrait", text: "Il se pose sur la tête des 2 poteaux, d’un bout à l’autre.", fields: [
+      { k: "L", label: "Longueur", ans: 300, kind: "size", hint: "Ligne « entrait : longueur » de ta fiche." },
+      { k: "h", label: "Hauteur", ans: 12, kind: "size", hint: "Ligne « entrait : hauteur » de ta fiche." },
+      { k: "x", label: "X", ans: 0, kind: "x", hint: "Il commence au même endroit que le poteau gauche." },
+      { k: "z", label: "Élévation", ans: 150, kind: "z", hint: "Il se pose sur les poteaux. Ils mesurent combien ?" }],
+      draw: v => ferme({ show: ["potG", "potD"], ghost: ALL, extra: fin(v.L, v.h, v.x, v.z) ? [{ p: R(v.x, v.z, v.x + v.L, v.z + v.h), c: COL.entrait }] : [] }) },
+    { type: "end" }
+  ] },
+  { id: "m2", n: 2, title: "La pente 40 %", maths: "Pourcentages", badge: "Épure",
+    goal: { obj: "Calculer la hauteur du toit, puis poser le poinçon.", use: "La pente décide de la hauteur du toit. Si le poinçon est trop court ou trop long, tout le toit est faux et les tuiles laissent passer l’eau.", out: ["La hauteur exacte du poinçon", "Le poinçon assemblé dans l’entrait (tenon + mortaise)"] },
+    steps: [
+    { type: "goal", visual: () => ferme({ show: [...BASE, "poincon"], hi: ["poincon"], ghost: ALL }) },
+    { type: "brief", title: "La pente du toit", text: "Le client veut une pente de 40 %.", sub: "40 % = quand tu avances de 100, tu montes de 40.", visual: vStairs },
+    { type: "calc", title: "Ça monte de combien ?", q: "Du bord jusqu’au milieu de l’atelier, tu avances de 300 cm. Tu montes de combien ?", unit: "cm", ans: 120, hint: "Regarde le schéma des marches : combien de marches de 100 dans 300 ?", visual: () => ferme({ show: BASE, ghost: ALL, marks: ["slope"], slopeLabel: "?" }) },
+    { type: "calc", title: "Sur ton dessin", q: "120 cm en vrai. Combien sur ton dessin ?", unit: "mm", ans: 60, hint: "Même méthode qu’à la mission 1 : en mm d’abord, puis l’échelle.", visual: () => ferme({ show: BASE, ghost: ALL, marks: ["slope"], slopeLabel: "120 cm = ? mm" }) },
+    { type: "calc", title: "La surhauteur", q: "Le poinçon monte 10 mm plus haut que la pente, pour bien tenir les arbalétriers. Sa hauteur ?", unit: "mm", ans: 70, hint: "Tu as la hauteur de la pente. Le poinçon dépasse au-dessus.", visual: () => ferme({ show: [...BASE, "poincon"], hi: ["poincon"], ghost: ALL, marks: ["height"], hLabel: "?" }) },
+    { type: "calc", title: "Épaisseur du tenon", q: "Règle du métier : un tenon fait 1/3 de l’épaisseur de la pièce. Le poinçon fait 9 mm.", unit: "mm", ans: 3, hint: "1/3, c’est partager en combien de parts égales ?", visual: () => ferme({ show: ["entrait", "poincon", "tenon"], hi: ["tenon"], zoom: [110, 140, 190, 200] }) },
+    { type: "calc", title: "Longueur du tenon", q: "Le tenon s’enfonce de la moitié de la hauteur de l’entrait. L’entrait fait 12 mm de haut.", unit: "mm", ans: 6, hint: "La moitié, c’est partager en combien ?", visual: () => ferme({ show: ["entrait", "poincon", "tenon"], hi: ["tenon"], zoom: [110, 140, 190, 200] }) },
+    { type: "calc", title: "Le sommet", q: "Le poinçon part de la cote 162 et mesure 70 mm. Son sommet est à quelle cote ?", unit: "mm", ans: 232, hint: "Sommet = là où il commence + sa hauteur.", visual: () => ferme({ show: [...BASE, "poincon"], hi: ["poincon"], ghost: ALL, marks: ["levels"], topLabel: "?" }) },
+    { type: "build", title: "Creuse la mortaise", text: "Au milieu de l’entrait. Elle a la forme exacte du tenon que tu as calculé.", btn: "Creuser", fields: [
+      { k: "w", label: "Largeur", ans: 3, kind: "size", hint: "C’est l’épaisseur du tenon." },
+      { k: "p", label: "Profondeur", ans: 6, kind: "size", hint: "C’est la longueur du tenon." }],
+      draw: v => ferme({ show: ["entrait"], zoom: [110, 140, 190, 200], extra: [{ p: CUTS.mortaise, ghost: true }, ...(fin(v.w, v.p) ? [{ p: R(150 - v.w / 2, 162 - v.p, 150 + v.w / 2, 162), hole: true }] : [])] }) },
+    { type: "build", title: "Pose le poinçon", text: "Au milieu de l’entrait, debout.", info: ["Épaisseur 9 mm"], fields: [
+      { k: "h", label: "Hauteur", ans: 70, kind: "size", hint: "Tu l’as calculée : la pente, plus la surhauteur." },
+      { k: "x", label: "X", ans: 145.5, kind: "x", hint: "Le milieu de l’entrait est à 150. Le poinçon fait 9 mm de large : où commence son côté gauche ?" },
+      { k: "z", label: "Élévation", ans: 162, kind: "z", hint: "Il se pose sur l’entrait. À quelle cote est le dessus de l’entrait ?" }],
+      draw: v => ferme({ show: [...BASE, "mortaise"], ghost: ALL, extra: fin(v.h, v.x, v.z) ? [{ p: R(v.x, v.z, v.x + 9, v.z + v.h), c: COL.poincon }] : [] }) },
+    { type: "build", title: "Taille le tenon", text: "Sous le poinçon. Il doit rentrer pile dans la mortaise.", btn: "Tailler", fields: [
+      { k: "w", label: "Épaisseur", ans: 3, kind: "size", hint: "Même largeur que la mortaise." },
+      { k: "p", label: "Longueur", ans: 6, kind: "size", hint: "Même profondeur que la mortaise." }],
+      draw: v => ferme({ show: ["entrait", "mortaise", "poincon"], zoom: [110, 140, 190, 200], extra: fin(v.w, v.p) ? [{ p: R(150 - v.w / 2, 162 - v.p, 150 + v.w / 2, 162), c: COL.poincon }] : [] }) },
+    { type: "end" }
+  ] },
+  { id: "m3", n: 3, title: "Les angles", maths: "Angles", badge: "Tailleur",
+    goal: { obj: "Calculer les angles de coupe, puis poser les arbalétriers et les contrefiches.", use: "Le bois arrive en barres droites. Sans les bons angles, les pièces ne s’emboîtent pas : la ferme est refusée.", out: ["Tous les angles de la ferme", "1 ferme complète, puis les 3 fermes de l’atelier"] },
+    steps: [
+    { type: "goal", visual: () => ferme({ show: ALL, hi: ["arbG", "arbD", "cfG", "cfD"] }) },
+    { type: "rule", title: "3 règles d’angles", text: "Pente 40 % : la table du charpentier donne 22°.", table: true, visual: vRules },
+    { type: "calc", angle: "B", title: "Angle B", q: "Le poinçon est debout, l’entrait est couché. Angle B ?", known: ["A = 22°"], unit: "°", ans: 90, hint: "Regarde le petit carré dessiné sur le schéma.", visual: () => ferme({ zoom: [-10, 140, 230, 245], marks: ["angles"], angle: "B", show: ALL }) },
+    { type: "calc", angle: "C", title: "Angle C", q: "A, B et C sont les 3 angles du même triangle.", known: ["A = 22°", "B = 90°"], unit: "°", ans: 68, hint: "Les 3 angles d’un triangle font toujours… ? Regarde la règle.", visual: () => ferme({ zoom: [-10, 140, 230, 245], marks: ["angles"], angle: "C", show: ALL }) },
+    { type: "calc", angle: "D", title: "Angle D", q: "C et D sont de chaque côté de la coupe.", known: ["C = 68°"], unit: "°", ans: 112, hint: "Ensemble, C et D forment une ligne droite.", visual: () => ferme({ zoom: [-10, 140, 230, 245], marks: ["angles"], angle: "D", show: ALL }) },
+    { type: "calc", angle: "F", title: "Angle F", q: "La contrefiche fait E = 45° avec le poinçon. Angle F, avec l’horizontale ?", known: ["E = 45°"], unit: "°", ans: 45, hint: "Ensemble, E et F forment un coin d’équerre.", visual: () => ferme({ zoom: [-10, 140, 230, 245], marks: ["angles"], angle: "F", show: ALL }) },
+    { type: "calc", angle: "G", title: "Angle G", q: "C, E et G sont les 3 angles du petit triangle.", known: ["C = 68°", "E = 45°"], unit: "°", ans: 67, hint: "Même règle que pour l’angle C.", visual: () => ferme({ zoom: [-10, 140, 230, 245], marks: ["angles"], angle: "G", show: ALL }) },
+    { type: "build", title: "Incline l’arbalétrier", text: "La barre brute (175 mm) est posée au pied. Règle son inclinaison : elle doit suivre la pente du toit.", btn: "Incliner", fields: [
+      { k: "a", label: "Inclinaison", unit: "°", ans: 22, kind: "angle", hint: "Regarde la table du charpentier : pente 40 %." }],
+      draw: v => ferme({ zoom: [-40, 125, 200, 255], show: [...BASE, "poincon"], ghost: ["arbG"], extra: fin(v.a) ? [{ p: barAt(v.a), c: COL.arbG }] : [] }) },
+    { type: "build", title: "Règle ta scie", text: "Au pied, la coupe est à plat (de niveau). En tête, elle est verticale (d’aplomb). Donne l’angle entre la barre et chaque coupe.", btn: "Couper", after: "La machine a taillé le 2e arbalétrier par symétrie.", fields: [
+      { k: "p", label: "Angle au pied", unit: "°", ans: 22, kind: "cut", hint: "Entre la barre et l’entrait : c’est quel angle sur ton schéma ?" },
+      { k: "c", label: "Angle en tête", unit: "°", ans: 68, kind: "cut", hint: "Entre la barre et le poinçon : tu l’as calculé, c’est l’angle C." }],
+      draw: v => {
+        if (near(v.p, 22) && near(v.c, 68)) return ferme({ zoom: [-15, 130, 315, 250], show: [...BASE, "poincon", "arbG", "arbD"], hi: ["arbG", "arbD"] });
+        const lines = [];
+        if (Number.isFinite(v.p)) { const l = lineAt([12, 162], 22 - v.p, 24); lines.push({ ...l, c: near(v.p, 22) ? "#47d394" : "#ffb547", label: "pied", l: [-22, 172], dash: true }); }
+        if (Number.isFinite(v.c)) { const l = lineAt([145.5, 215.9], 22 + v.c, 22); lines.push({ ...l, c: near(v.c, 68) ? "#47d394" : "#ffb547", label: "tête", l: [170, 244], dash: true }); }
+        return ferme({ zoom: [-40, 125, 200, 255], show: [...BASE, "poincon", "raw"], lines });
+      } },
+    { type: "build", title: "Pose les contrefiches", text: "Elle part du pied du poinçon et monte vers l’arbalétrier.", after: "La 2e contrefiche est posée par symétrie.", fields: [
+      { k: "f", label: "Angle avec l’horizontale", unit: "°", ans: 45, kind: "angle", hint: "C’est l’angle F : tu l’as calculé." }],
+      draw: v => near(v.f, 45) ? ferme({ zoom: [-15, 130, 315, 250], show: ALL, hi: ["cfG", "cfD"] })
+        : ferme({ zoom: [-15, 130, 315, 250], show: [...BASE, "poincon", "arbG", "arbD"], ghost: ["cfG"], extra: fin(v.f) ? [{ p: cfAt(v.f), c: COL.cfG }] : [] }) },
+    { type: "build", title: "Les 3 fermes", text: "Vue de dessus. La ferme 1 est devant (Y = 0). La ferme 3 doit finir pile au fond de l’atelier (400). La ferme 2 est au milieu des deux.", info: ["Épaisseur d’une ferme : 9 mm"], btn: "Lever les fermes", fields: [
+      { k: "y3", label: "Y de la ferme 3", ans: 391, kind: "y", hint: "Y, c’est la place de son bord avant. Elle fait 9 mm d’épaisseur et doit finir à 400." },
+      { k: "y2", label: "Y de la ferme 2", ans: 195.5, kind: "y", hint: "Pile au milieu entre 0 et la ferme 3." }],
+      draw: v => vPlan(v.y2, v.y3) },
+    { type: "end" }
+  ] },
+  { id: "m4", n: 4, title: "Le devis", maths: "Pourcentages", badge: "Chiffreur",
+    goal: { obj: "Calculer le bois à commander et le prix à payer.", use: "Le devis dit au fournisseur combien de bois livrer, et au client combien il va payer. Une erreur, et c’est l’entreprise qui perd de l’argent.", out: ["Le prix final du bois", "Ton certificat de dessinateur-traceur"] },
+    steps: [
+    { type: "goal", visual: vMoney },
+    { type: "rule", title: "Les % du pro", text: "On commande un peu plus de bois, car chaque coupe fait des chutes. Et le fournisseur fait une remise aux pros.", chains: [[["50 m"], ["+ 12 %", "op"], ["56 m", "good"]], [["100 €"], ["− 15 %", "op"], ["85 €", "good"]]], note: "12 % de 50, c’est 50 × 12 ÷ 100 = 6. Et le bois s’arrondit toujours au mètre au-dessus : 56,2 m → 57 m.", visual: vMoney },
+    { type: "multi", title: "Ton devis", text: "Une ligne à la fois. Calculatrice autorisée.", visual: () => ferme({ show: ALL, marks: ["lengths"] }), rows: [
+      { label: "Bois pour 1 ferme", real: "longueurs sur le schéma (dessin)", ans: 1130, unit: "mm", hint: "Additionne toutes les pièces. Il y a 2 poteaux, 2 arbalétriers, 2 contrefiches." },
+      { label: "Pour tout l’atelier", real: "il y a 3 fermes", ans: 3390, unit: "mm", hint: "Tu as le bois d’une ferme. Combien de fermes ?" },
+      { label: "En vrai, en mètres", real: "dessin 1/20 → vraie taille", ans: 67.8, unit: "m", hint: "La vraie charpente est 20 fois plus grande. Puis 1 m = 1 000 mm." },
+      { label: "Chutes : 12 %", real: "12 % du bois en vrai", ans: 8.136, tol: 0.01, unit: "m", hint: "Relis l’exemple : 12 % de 50, c’est 50 × 12 ÷ 100." },
+      { label: "Bois à commander", real: "bois + chutes, en mètres entiers", ans: 76, unit: "m", hint: "Ajoute les chutes. Puis monte au mètre entier au-dessus." },
+      { label: "Prix brut", real: "20 € le mètre", ans: 1520, unit: "€", hint: "Combien de mètres ? Combien coûte 1 mètre ?" },
+      { label: "Remise : 15 %", real: "15 % du prix brut", ans: 228, unit: "€", hint: "Même méthode que les chutes, avec 15 %." },
+      { label: "Prix net à payer", real: "ce que paie le client", ans: 1292, unit: "€", hint: "La remise, on l’ajoute ou on l’enlève ?" }] },
+    { type: "end" }
+  ] }
+];
+const LEX = [
+  ["Ferme", "Le triangle porteur du toit. Ton atelier en a 3.", { show: ALL }],
+  ["Entrait", "La poutre couchée en bas de la ferme.", { show: ALL, hi: ["entrait"] }],
+  ["Poinçon", "La pièce debout au milieu. Elle monte au sommet.", { show: ALL, hi: ["poincon"] }],
+  ["Arbalétrier", "La poutre penchée qui suit la pente.", { show: ALL, hi: ["arbG", "arbD"] }],
+  ["Contrefiche", "Le petit renfort entre poinçon et arbalétrier.", { show: ALL, hi: ["cfG", "cfD"] }],
+  ["Poteau", "La pièce debout qui porte l’entrait.", { show: ALL, hi: ["potG", "potD"] }],
+  ["Mortaise", "Le trou creusé dans une pièce.", { show: ["entrait"], cuts: ["mortaise"], zoom: [110, 140, 190, 200] }],
+  ["Tenon", "La languette qui rentre dans la mortaise.", { show: ["entrait", "poincon", "tenon"], hi: ["tenon"], zoom: [110, 140, 190, 200] }],
+  ["Épure", "Le dessin de la ferme, vue de face, qui sert à tracer les coupes.", null],
+  ["Fiche de débit", "La liste des pièces de bois avec leurs mesures.", null],
+  ["Coupe d’aplomb", "Une coupe toute droite, verticale.", null],
+  ["Coupe de niveau", "Une coupe à plat, horizontale.", null]
+];
+
+/* ---------- État ---------- */
+function def() { return { name: "", xp: 0, done: {}, pos: {}, solved: {}, open: false }; }
+function load() { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && typeof v === "object" ? Object.assign(def(), v) : def(); } catch (e) { return def(); } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }
+let S = load();
+let cur = { view: "home" };
+const ui = { tries: {}, hint: {}, sol: {}, fb: {}, vals: {}, bv: {}, fok: {}, bmsg: {} };
+
+const fmt = v => String(v).replace(".", ",");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const num = s => { const t = String(s ?? "").replace(/\s/g, "").replace(",", ".").replace(/[^0-9.\-]/g, ""); return t === "" || t === "-" ? NaN : parseFloat(t); };
+const rank = x => x < 200 ? "Apprenti traceur" : x < 450 ? "Traceur confirmé" : "Chef traceur";
+const unlocked = i => S.open || i === 0 || !!S.done[MISSIONS[i - 1].id];
+function addXP(n) {
+  if (!n) return; S.xp += n; save();
+  const d = document.createElement("div"); d.className = "xpfloat"; d.textContent = "+" + n + " XP"; document.body.appendChild(d); setTimeout(() => d.remove(), 1200);
+}
+const xpPill = () => `<div class="xp" aria-label="Points d'expérience"><b>${S.xp} XP</b><span>${rank(S.xp)}</span></div>`;
+const encState = () => { try { return btoa(unescape(encodeURIComponent(JSON.stringify(S)))); } catch (e) { return ""; } };
+const decState = c => JSON.parse(decodeURIComponent(escape(atob(c.trim()))));
+
+/* ---------- Accueil ---------- */
+function heroVisual() {
+  if (S.done.m3) return vPlan(195.5, 391).replace("Vue de dessus", "Vue de dessus");
+  const show = [...(S.done.m1 ? BASE : []), ...(S.done.m2 ? ["poincon"] : [])];
+  return ferme({ show, ghost: ALL });
+}
+function tile(m, i) {
+  const ok = unlocked(i), done = S.done[m.id], st = S.pos[m.id] || 0;
+  let chip = `<span class="chip">À faire</span>`;
+  if (done) chip = `<span class="chip done">Validée · ${m.badge}</span>`;
+  else if (!ok) chip = `<span class="chip">Verrouillée</span>`;
+  else if (st > 0) chip = `<span class="chip now">Étape ${st + 1} / ${m.steps.length}</span>`;
+  return `<button class="tile${ok ? "" : " locked"}${done ? " isdone" : ""}" data-act="open" data-m="${i}" ${ok ? "" : "disabled"}>
+    <span class="num">0${m.n}</span><h3>${m.title}</h3><span class="meta">${m.goal.obj}</span><span class="meta">${m.maths} · environ 1 h 30</span>${chip}</button>`;
+}
+function homeHTML() {
+  return `<header class="top"><div class="brand">Bureau d’Études Charpente<small>Atelier 6 × 8 m · ferme latine · 1/20</small></div>${xpPill()}</header>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Ton poste : dessinateur-traceur</p>
+      <h1>Dessine la charpente. Chiffre le bois.</h1>
+      <div class="namebox"><label for="name">Ton nom</label><input id="name" autocomplete="off" placeholder="Ton nom" value="${esc(S.name)}"></div>
+      <p class="sub">4 missions, tout se fait ici. L’appli contrôle chaque pièce que tu poses : tu peux avancer seul, en classe ou à la maison.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" data-act="lex">Lexique du métier</button><button class="btn sm" data-act="save">Sauvegarde</button></div>
+    </div>
+    <div class="visual">${heroVisual()}</div>
+  </section>
+  <div class="session">Session 1 · conception et chiffrage</div>
+  <div class="tiles">${tile(MISSIONS[0], 0)}${tile(MISSIONS[1], 1)}</div>
+  <div class="session">Session 2 · assemblage et devis</div>
+  <div class="tiles">${tile(MISSIONS[2], 2)}${tile(MISSIONS[3], 3)}</div>
+  <div class="foot"><button class="btn sm ghost" data-act="chefopen">Chef d’atelier</button><button class="btn sm ghost" data-act="reset">Recommencer à zéro</button>${S.done.m4 ? `<button class="btn sm go" data-act="cert">Mon certificat</button>` : ""}</div>`;
+}
+
+/* ---------- Étapes ---------- */
+const chainHTML = c => `<div class="chain">${c.map(([t, k]) => `<span class="${k === "op" ? "op" : "box" + (k === "good" ? " good" : "")}">${t}</span>`).join("")}</div>`;
+function bvals(st, k) {
+  const o = {}, bv = ui.bv[k] || {}, fok = ui.fok[k] || {};
+  for (const f of st.fields) o[f.k] = (S.solved[k] || fok[f.k]) ? f.ans : num(bv[f.k]);
+  return o;
+}
+function stepOK(m, i) { return canNext(m, m.steps[i], m.id + "-" + i); }
+const needs = st => ["calc", "multi", "build"].includes(st.type);
+function bodyHTML(m, st, k) {
+  const kick = (t, extra) => `<p class="kicker">${t}${extra ? ` <em>${extra}</em>` : ""}</p>`;
+  if (st.type === "goal") {
+    const g = m.goal;
+    return kick("Mission " + m.n) + `<h2>${m.title}</h2>
+      <div class="goal"><p class="lbl">Objectif</p><p class="lead">${g.obj}</p></div>
+      <div class="goal"><p class="lbl">À quoi ça sert</p><p class="sub" style="color:var(--paper)">${g.use}</p></div>
+      <div class="goal"><p class="lbl">À la fin, tu auras</p><ul class="outs">${g.out.map(x => `<li>${x}</li>`).join("")}</ul></div>`;
+  }
+  if (st.type === "brief") return kick("À savoir") + `<h2>${st.title}</h2><p class="lead">${st.text}</p>${st.sub ? `<p class="sub">${st.sub}</p>` : ""}`;
+  if (st.type === "rule") {
+    let s = kick("La règle d’or") + `<h2>${st.title}</h2><p class="lead">${st.text}</p>`;
+    if (st.steps2) s += `<ol class="todo">${st.steps2.map(x => `<li><span style="font-size:20px;font-weight:600">${x}</span></li>`).join("")}</ol>`;
+    (st.chains || []).forEach(c => s += chainHTML(c));
+    if (st.table) s += `<p class="lbl">Table du charpentier</p><div class="ptab">${[["30 %", "17°"], ["40 %", "22°"], ["50 %", "27°"], ["100 %", "45°"]].map(([p, a]) => `<div class="${p === "40 %" ? "on" : ""}"><b>${p}</b><span>${a}</span></div>`).join("")}</div>`;
+    if (st.note) s += `<div class="note">${st.note}</div>`;
+    return s;
+  }
+  if (st.type === "calc") {
+    const ok = S.solved[k], tries = ui.tries[k] || 0;
+    let s = kick("Calcul", st.angle ? "Angle " + st.angle : "") + `<h2>${st.title}</h2><p class="lead">${st.q}</p>`;
+    if (st.known) s += `<div class="known">${st.known.map(x => `<span>${x}</span>`).join("")}</div>`;
+    s += `<div class="chain"><input class="num" id="ans" data-k="${k}" inputmode="decimal" autocomplete="off" aria-label="Ta réponse" value="${ok ? fmt(st.ans) : esc(ui.vals[k] || "")}" ${ok ? "disabled" : ""}><span class="unit">${st.unit}</span></div>`;
+    if (!ok) s += `<button class="btn go" data-act="calc">Vérifier</button>`;
+    s += `<div class="fb ${ok ? "ok" : ui.fb[k] ? "ko" : ""}" aria-live="polite">${ok ? (ui.fb[k] || "Cote juste. Passe à la suite.") : (ui.fb[k] || "")}</div>`;
+    if (!ok) {
+      s += `<div class="helpers"><button class="btn sm" data-act="hint">Coup de pouce</button>${tries >= 3 ? `<button class="btn sm ghost" data-act="sol">Voir la solution</button>` : ""}</div>`;
+      if (ui.hint[k]) s += `<div class="hintbox"><b>Coup de pouce</b>${st.hint}</div>`;
+    }
+    return s;
+  }
+  if (st.type === "multi") {
+    let s = kick("Fiche à remplir") + `<h2>${st.title}</h2><p class="sub">${st.text}</p><div class="rows">`;
+    st.rows.forEach((r, i) => {
+      const rk = k + "-" + i, ok = S.solved[rk] || r.given, tries = ui.tries[rk] || 0;
+      s += `<div class="row${ok ? " ok" : ""}${r.given ? " given" : ""}"><div class="rl"><b>${r.label}${r.given ? ` <em class="ex">Exemple</em>` : ""}</b><span>${r.real}</span></div>
+        <div class="rin"><input class="num sm" id="r-${i}" data-k="${rk}" data-r="${i}" inputmode="decimal" autocomplete="off" aria-label="${r.label}" value="${ok ? fmt(r.ans) : esc(ui.vals[rk] || "")}" ${ok ? "disabled" : ""}><span class="unit">${r.unit}</span></div>
+        ${ok ? `<span class="unit" style="color:var(--good)">OK</span>` : `<button class="btn sm go" data-act="row" data-r="${i}">OK</button>`}
+        <div class="rowfb">${!ok && ui.fb[rk] ? `<span class="bad">${ui.fb[rk]}</span>` : ""}${!ok && tries >= 1 ? `<div class="hintbox"><b>Coup de pouce</b>${r.hint}${tries >= 3 ? ` <button class="btn sm ghost" data-act="rowsol" data-r="${i}">Solution</button>` : ""}</div>` : ""}</div></div>`;
+    });
+    return s + `</div>`;
+  }
+  if (st.type === "build") {
+    const ok = S.solved[k], bv = ui.bv[k] || {}, fok = ui.fok[k] || {}, msg = ui.bmsg[k] || {}, tries = ui.tries[k] || 0;
+    let s = kick("Construction", st.fields[0].kind === "y" ? "Vue de dessus" : "Vue de face") + `<h2>${st.title}</h2><p class="lead">${st.text}</p>`;
+    if (st.info) s += `<div class="known">${st.info.map(x => `<span>${x}</span>`).join("")}</div>`;
+    s += `<div class="flds">` + st.fields.map(f => {
+      const good = ok || fok[f.k], bad = !good && msg[f.k];
+      return `<div class="fld${good ? " good" : bad ? " bad" : ""}"><label for="bf-${f.k}">${f.label}</label>
+        <div class="rin"><input class="num sm" id="bf-${f.k}" data-bk="${f.k}" inputmode="decimal" autocomplete="off" value="${good ? fmt(f.ans) : esc(bv[f.k] ?? "")}" ${good ? "disabled" : ""}><span class="unit">${f.unit || "mm"}</span></div>
+        ${bad ? `<div class="fmsg">${msg[f.k]}</div>` : ""}${bad && ui.hint[k] ? `<div class="hintbox"><b>Coup de pouce</b>${f.hint}</div>` : ""}</div>`;
+    }).join("") + `</div>`;
+    if (!ok) s += `<button class="btn go doneBtn" data-act="pose">${st.btn || "Poser la pièce"}</button>
+      <div class="helpers">${tries >= 1 ? `<button class="btn sm" data-act="hint">Coup de pouce</button>` : ""}${tries >= 3 ? `<button class="btn sm ghost" data-act="bsol">Voir la solution</button>` : ""}</div>`;
+    else s += `<div class="fb ok" aria-live="polite">${ui.fb[k] || "Pièce posée. Rien ne flotte."}</div>${st.after ? `<div class="note">${st.after}</div>` : ""}`;
+    s += `<p style="margin-top:14px"><button class="btn sm ghost" data-act="fiche">Voir ma fiche de débit</button></p>`;
+    return s;
+  }
+  if (st.type === "end") {
+    const list = m.steps.map((x, i) => ({ x, i })).filter(o => needs(o.x));
+    const todo = list.filter(o => !stepOK(m, o.i));
+    let s = kick("Fiche de validation") + `<h2>Bilan de la mission ${m.n}</h2><p class="sub">L’appli a contrôlé ton travail.</p><div class="checks">`;
+    list.forEach(o => { const d = stepOK(m, o.i); s += `<div class="chk${d ? " on" : ""}"><span class="cb">${d ? "✓" : ""}</span>${o.x.title}</div>`; });
+    s += `</div>`;
+    if (S.done[m.id]) s += `<div class="chef"><h3>Mission validée ✓</h3><p class="sub">Badge ${m.badge} obtenu.</p><button class="btn go" data-act="home">Retour aux missions</button>${m.n === 4 ? ` <button class="btn" data-act="cert">Mon certificat</button>` : ""}</div>`;
+    else if (todo.length) s += `<div class="chef"><h3>Il te reste ${todo.length} étape${todo.length > 1 ? "s" : ""}</h3><button class="btn go" data-act="jump" data-s="${todo[0].i}">Y aller</button></div>`;
+    else s += `<div class="chef"><h3>Tout est bon</h3><p class="sub">Toutes tes cotes sont justes, toutes tes pièces sont en place.</p><button class="btn go" data-act="validate">Valider la mission</button></div>`;
+    return s;
+  }
+  return "";
+}
+function canNext(m, st, k) {
+  if (st.type === "calc" || st.type === "build") return !!S.solved[k];
+  if (st.type === "multi") return st.rows.every((r, i) => r.given || S.solved[k + "-" + i]);
+  if (st.type === "end") return false;
+  return true;
+}
+function visualOf(st, k) { return st.type === "build" ? st.draw(bvals(st, k)) : st.visual ? st.visual() : ""; }
+function stepHTML() {
+  const m = MISSIONS[cur.m], s = cur.s, st = m.steps[s], k = m.id + "-" + s;
+  const segs = m.steps.map((_, i) => `<i class="${i < s ? "d" : i === s ? "c" : ""}"></i>`).join("");
+  const last = s === m.steps.length - 1;
+  return `<header class="top"><button class="btn sm" data-act="home">← Missions</button><div class="mtag">Mission ${m.n} · <b>${m.title}</b></div>${xpPill()}</header>
+  <div class="segs" aria-hidden="true">${segs}</div>
+  ${st.type === "goal" ? "" : `<div class="objbar"><b>Objectif</b>${m.goal.obj}</div>`}
+  <div class="stage"><div class="visual" id="vis">${visualOf(st, k)}</div><div class="card">${bodyHTML(m, st, k)}</div></div>
+  <nav class="nav"><div class="nav-in"><button class="btn" data-act="prev" ${s === 0 ? "disabled" : ""}>← Retour</button><span class="count">Étape ${s + 1} / ${m.steps.length}</span>
+  ${last ? `<button class="btn" data-act="home">Missions</button>` : `<button class="btn go" data-act="next" ${canNext(m, st, k) ? "" : "disabled"}>Suivant →</button>`}</div></nav>`;
+}
+
+/* ---------- Rendu et actions ---------- */
+function render(keepScroll) {
+  document.querySelectorAll("input[data-k]").forEach(i => { if (!i.disabled) ui.vals[i.dataset.k] = i.value; });
+  const y = window.scrollY;
+  document.getElementById("app").innerHTML = cur.view === "home" ? homeHTML() : stepHTML();
+  window.scrollTo(0, keepScroll ? y : 0);
+}
+const GOOD = ["Cote juste.", "Pile poil.", "Validé.", "Propre, comme au bureau d’études."];
+const BAD = ["Pas encore. Recompte.", "Presque. Reprends le calcul.", "Pas la bonne cote."];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function judge(k, val, ans, tol) {
+  const v = num(val);
+  if (isNaN(v)) { ui.fb[k] = "Tape un nombre."; return false; }
+  if (Math.abs(v - ans) <= (tol || 0.001)) {
+    const t = ui.tries[k] || 0, used = ui.hint[k];
+    S.solved[k] = true; ui.fb[k] = pick(GOOD); save();
+    addXP(ui.sol[k] ? 0 : (t === 0 && !used ? 10 : 5));
+    return true;
+  }
+  ui.tries[k] = (ui.tries[k] || 0) + 1; ui.fb[k] = pick(BAD); return false;
+}
+function modal(html) { document.getElementById("modal").innerHTML = html ? `<div class="modal" data-act="closebg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>` : ""; }
+function lexHTML() {
+  return `<h2>Lexique du métier</h2><div class="lex">${LEX.map(([w, d, o]) => `<div class="lexi"><b>${w}</b><p>${d}</p>${o ? ferme(o) : ""}</div>`).join("")}</div><p style="margin-top:16px"><button class="btn go" data-act="close">Fermer</button></p>`;
+}
+function ficheHTML() {
+  const m = MISSIONS[0], i = m.steps.findIndex(s => s.type === "multi"), st = m.steps[i];
+  const rows = st.rows.map((r, j) => { const ok = r.given || S.solved["m1-" + i + "-" + j]; return `<div class="row"><div class="rl"><b>${r.label}</b><span>${r.real}</span></div><div class="rin"><span class="box${ok ? " good" : ""}">${ok ? fmt(r.ans) + " mm" : "?"}</span></div><span></span></div>`; }).join("");
+  return `<h2>Ma fiche de débit</h2><div class="rows">${rows}</div><p style="margin-top:16px"><button class="btn go" data-act="close">Fermer</button></p>`;
+}
+function certHTML() {
+  const d = new Date().toLocaleDateString("fr-FR");
+  return `<div class="cert"><p class="eyebrow">Bureau d’Études Charpente</p><p class="sub">Certifie que</p><div class="who">${esc(S.name || "Dessinateur-traceur")}</div>
+  <p class="lead">a conçu, taillé et chiffré une charpente à ferme latine : 3 fermes, échelle 1/20, devis 1 292 € HT.</p>
+  <p class="sub">${S.xp} XP · ${rank(S.xp)} · ${d}</p></div><p class="sub" style="margin-top:12px">Fais une capture d’écran de ce certificat et envoie-la à ton professeur.</p><p><button class="btn go" data-act="close">Fermer</button></p>`;
+}
+function saveHTML() {
+  return `<h2>Sauvegarde</h2><p class="sub">Ta progression reste sur cette tablette. Pour continuer ailleurs (à la maison, une autre tablette) : copie ce code et envoie-le-toi. Sur l’autre appareil, colle-le dans la case du bas.</p>
+  <textarea id="code" readonly aria-label="Ton code de sauvegarde">${encState()}</textarea>
+  <p><button class="btn go sm" data-act="copy">Copier mon code</button></p>
+  <p class="lbl">Reprendre avec un code</p><textarea id="code2" aria-label="Colle ton code ici" placeholder="Colle ton code ici"></textarea>
+  <p style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sm" data-act="loadcode">Reprendre</button><button class="btn sm ghost" data-act="close">Fermer</button></p><div class="fb" id="savefb" aria-live="polite"></div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act;
+  if (a === "closebg" && e.target !== b) return;
+  const m = MISSIONS[cur.m], st = m && m.steps[cur.s], k = m ? m.id + "-" + cur.s : "";
+  switch (a) {
+    case "open": { const i = +b.dataset.m; if (!unlocked(i)) return; cur = { view: "mission", m: i, s: Math.min(S.pos[MISSIONS[i].id] || 0, MISSIONS[i].steps.length - 1) }; render(); break; }
+    case "home": modal(""); cur = { view: "home" }; render(); break;
+    case "prev": if (cur.s > 0) { cur.s--; S.pos[m.id] = cur.s; save(); render(); } break;
+    case "next": if (canNext(m, st, k) && cur.s < m.steps.length - 1) { cur.s++; S.pos[m.id] = cur.s; save(); render(); } break;
+    case "jump": cur.s = +b.dataset.s; S.pos[m.id] = cur.s; save(); render(); break;
+    case "calc": { const i = document.getElementById("ans"); judge(k, i.value, st.ans, st.tol); render(true); break; }
+    case "hint": ui.hint[k] = true; render(true); break;
+    case "sol": ui.sol[k] = true; S.solved[k] = true; ui.fb[k] = "Solution : " + fmt(st.ans) + " " + st.unit; save(); render(true); break;
+    case "row": { const r = +b.dataset.r, rk = k + "-" + r, i = document.getElementById("r-" + r); judge(rk, i.value, st.rows[r].ans, st.rows[r].tol); render(true); break; }
+    case "rowsol": { const r = +b.dataset.r, rk = k + "-" + r; ui.sol[rk] = true; S.solved[rk] = true; save(); render(true); break; }
+    case "pose": {
+      const bv = ui.bv[k] || (ui.bv[k] = {}), fok = ui.fok[k] || (ui.fok[k] = {}), msg = ui.bmsg[k] = {};
+      let all = true;
+      for (const f of st.fields) {
+        if (fok[f.k]) continue;
+        const v = num(bv[f.k]);
+        if (isNaN(v)) { msg[f.k] = "Remplis cette case."; all = false; continue; }
+        if (Math.abs(v - f.ans) <= (f.tol || 0.26)) fok[f.k] = true;
+        else { all = false; msg[f.k] = MSG[f.kind][v > f.ans ? 0 : 1]; }
+      }
+      if (all) { S.solved[k] = true; save(); const t = ui.tries[k] || 0; addXP(ui.sol[k] ? 0 : (t === 0 && !ui.hint[k] ? 15 : 8)); ui.fb[k] = pick(["Pièce posée. Rien ne flotte.", "Pile en place.", "Assemblage propre."]); }
+      else ui.tries[k] = (ui.tries[k] || 0) + 1;
+      render(true); break;
+    }
+    case "bsol": { ui.sol[k] = true; const fok = ui.fok[k] || (ui.fok[k] = {}); st.fields.forEach(f => fok[f.k] = true); S.solved[k] = true; ui.fb[k] = "Voilà la solution. Regarde bien où va la pièce."; save(); render(true); break; }
+    case "validate": {
+      if (!m.steps.every((x, i) => !needs(x) || stepOK(m, i))) return;
+      S.done[m.id] = true; save(); addXP(50); render(true);
+      modal(`<div class="badge">${vBadge(m.n, m.badge)}<h2>Mission ${m.n} validée</h2><p class="lead">Badge ${m.badge} · +50 XP</p>
+        ${m.n === 4 ? `<button class="btn go" data-act="cert">Voir mon certificat</button>` : `<button class="btn go" data-act="home">Mission suivante</button>`}</div>`);
+      break;
+    }
+    case "cert": modal(certHTML()); break;
+    case "lex": modal(lexHTML()); break;
+    case "fiche": modal(ficheHTML()); break;
+    case "save": modal(saveHTML()); break;
+    case "copy": { const t = document.getElementById("code"); t.select(); const done = () => document.getElementById("savefb").innerHTML = `<span style="color:var(--good)">Code copié. Colle-le dans un mail ou sur l’ENT.</span>`; try { navigator.clipboard.writeText(t.value).then(done, () => { document.getElementById("savefb").textContent = "Copie impossible : sélectionne le code et copie-le à la main."; }); } catch (err) { document.getElementById("savefb").textContent = "Copie impossible : sélectionne le code et copie-le à la main."; } break; }
+    case "loadcode": { try { const v = decState(document.getElementById("code2").value); if (!v || typeof v !== "object" || !("xp" in v)) throw 0; S = Object.assign(def(), v); save(); modal(""); cur = { view: "home" }; render(); } catch (err) { document.getElementById("savefb").innerHTML = `<span style="color:var(--bad)">Ce code ne marche pas. Vérifie que tu l’as collé en entier.</span>`; } break; }
+    case "close": case "closebg": modal(""); break;
+    case "chefopen": modal(`<h2>Chef d’atelier</h2><p class="sub">Réservé à l’enseignant : débloque toutes les missions (rattrapage, élève absent).</p><div style="display:flex;gap:10px;flex-wrap:wrap"><input class="num" id="pin2" type="password" inputmode="numeric" autocomplete="off" aria-label="Code du chef d’atelier"><button class="btn go" data-act="unlock">Débloquer</button><button class="btn ghost" data-act="close">Annuler</button></div><div class="fb ko" id="pinfb2" aria-live="polite"></div>`); break;
+    case "unlock": if (document.getElementById("pin2").value.trim() === PIN) { S.open = true; save(); modal(""); render(); } else document.getElementById("pinfb2").textContent = "Code faux."; break;
+    case "reset": modal(`<h2>Tout recommencer ?</h2><p class="lead">Tes points, tes badges et tes réponses seront effacés sur cette tablette.</p><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn" data-act="close">Non, garder</button><button class="btn go" data-act="doreset">Oui, effacer</button></div>`); break;
+    case "doreset": S = def(); save(); for (const x in ui) ui[x] = {}; modal(""); cur = { view: "home" }; render(); break;
+  }
+});
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  const t = e.target;
+  if (t.id === "ans") document.querySelector('[data-act="calc"]')?.click();
+  else if (t.dataset && t.dataset.bk) document.querySelector('[data-act="pose"]')?.click();
+  else if (t.dataset && t.dataset.r !== undefined && t.id.startsWith("r-")) document.querySelector(`[data-act="row"][data-r="${t.dataset.r}"]`)?.click();
+  else if (t.id === "pin2") document.querySelector('[data-act="unlock"]')?.click();
+});
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.id === "name") { S.name = t.value; save(); return; }
+  if (t.dataset && t.dataset.bk && cur.view === "mission") {
+    const m = MISSIONS[cur.m], st = m.steps[cur.s], k = m.id + "-" + cur.s;
+    (ui.bv[k] || (ui.bv[k] = {}))[t.dataset.bk] = t.value;
+    const v = document.getElementById("vis"); if (v) v.innerHTML = visualOf(st, k);
+  }
+});
+render();
+</script>
+</body>
+</html>
